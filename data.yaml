@@ -1,0 +1,13 @@
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 12
+names: ['Baton', 'Bullet', 'Gun', 'Hammer', 'HandCuffs', 'Knife', 'Lighter', 'Pliers', 'Powerbank', 'Scissors', 'Sprayer', 'Wrench']
+
+roboflow:
+  workspace: nagy-mfvph
+  project: badges-full-pidray
+  version: 2
+  license: MIT
+  url: https://universe.roboflow.com/nagy-mfvph/badges-full-pidray/dataset/2
