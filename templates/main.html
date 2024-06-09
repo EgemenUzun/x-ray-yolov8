@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>X-Ray Detection</title>
+		<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+			integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+			crossorigin="anonymous" />
+		<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+		<script defer src="{{ url_for('static', filename='script/main.js') }}"></script>
+		<script>
+			var originalUrl = "{{ url_for('video') }}";
+			var editedUrl = "{{ url_for('edited_video') }}";
+			var defaultImageUrl = "{{ url_for('static', filename='default_image.png') }}"
+		</script>
+	</head>
+
+	<body>
+		<nav class="navbar navbar-expand-lg sticky-top" style="background-color: #555B6E;">
+			<div
+				style="display: flex; align-items: center; align-items: center; width: 100%; justify-content: space-between; padding: 10px;">
+				<div style="display: flex;">
+					<div>
+						<a class="navbar-brand" href="#" style="color: #F4F4F9;">
+							<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Radiation_warning_symbol.svg/600px-Radiation_warning_symbol.svg.png"
+								alt="Logo" width="30" height="30" class="d-inline-block align-text-top rounded">
+							X-Ray Detector
+						</a>
+					</div>
+					<div>
+						<div style="display: flex; flex-direction: row; justify-content: space-between;">
+							<ul class="navbar-nav" style="display: flex; gap: 10px;">
+								<li class="nav-item">
+									<button class="btn btn-success" id="baslat" name="baslat"
+										onclick="startWebcam()">Başlat</button>
+								</li>
+								<li class="nav-item">
+									<button class="btn btn-danger" id="bitir" name="bitir"
+										onclick="stopWebcam()">Durdur</button>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div style="margin-right: 20px;">
+					<div class="div2"
+						style="color: #F4F4F9; display: flex; flex-direction: row; gap: 10px; font-weight: bold;">
+						<p id="timer">00:00</p>
+						<p id="date"></p>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<div
+			style="display: flex; flex-direction: row; justify-content: space-evenly; align-items: center; height: calc(100vh - 76px); margin-top: -60px; background-color: #F4F4F9;">
+
+			<form method="post" action="/">
+				<div class="card"
+					style="padding: 20px; margin-right: 40px; gap: 10px; align-items: center; background-color: #bedbbb;">
+					<div class="card" style="width: 18rem; padding: 10px;">
+						<label for="brightness" class="form-label">Contrast</label>
+						<input type="range" class="form-range" min="-127" max="127" value="0" id="brightness"
+							name="brightness">
+
+						<label for="contrast" class="form-label">Brightness</label>
+						<input type="range" class="form-range" min="0" max="2" step="0.04" value="1" id="contrast"
+							name="contrast">
+					</div>
+
+					<div class="card" style="width: 18rem; padding: 10px;">
+						<div class="form-check form-switch">
+							<input class="form-check-input" type="checkbox" role="switch" id="greyscale" name="filters"
+								value="greyscale">
+							<label class="form-check-label" for="greyscale">Greyscale</label>
+						</div>
+						<div class="form-check form-switch">
+							<input class="form-check-input" type="checkbox" role="switch" id="sharpening" name="filters"
+								value="super">
+							<label class="form-check-label" for="sharpening">Sharpening</label>
+						</div>
+						<div class="form-check form-switch">
+							<input class="form-check-input" type="checkbox" role="switch" id="edge" name="filters"
+								value="edge">
+							<label class="form-check-label" for="edge">Edge Detection</label>
+						</div>
+						<div class="form-check form-switch">
+							<input class="form-check-input" type="checkbox" role="switch" id="bilateral" name="filters"
+								value="bilateral">
+							<label class="form-check-label" for="bilateral">Denoise</label>
+						</div>
+						<div class="form-check form-switch">
+							<input class="form-check-input" type="checkbox" role="switch" id="negative" name="filters"
+								value="negative">
+							<label class="form-check-label" for="negative">Negative</label>
+						</div>
+					</div>
+					<input class="btn btn-primary effects-button text-nowrap" style="width: 200px" type="submit"
+						value="Değişiklikleri Uygula">
+				</div>
+			</form>
+
+			<div
+				style="display: flex; flex-direction: row; justify-content: space-around; align-items: center; gap: 40px; color: #F4F4F9;">
+				<div class="card mb-3"
+					style="width: 640px; background-color: #bedbbb; color: #555B6E; font-weight: bolder;"
+					id="original-card">
+					<img class="card-img-top" id="original-image" src="{{ url_for('video') }}" />
+					<!-- {{ url_for('video') }} -->
+					<!-- {{ url_for('static', filename='default_image.png') }} -->
+					<div class="card-body">
+						<p class="card-text" style="text-align: center;">Original Image</p>
+					</div>
+				</div>
+				<!-- değişiklik burada!!! -->
+				<div class="card mb-3"
+					style="width: 640px; background-color: #bedbbb; color: #555B6E; font-weight: bolder;"
+					id="edited-card">
+					<img class=" card-img-top" id="edited-image" src="{{ url_for('edited_video') }}" />
+					<!-- {{ url_for('edited_video') }} -->
+					<div class="card-body">
+						<p class="card-text" style="text-align: center;">Edited Image</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		<footer style="text-align: center; background-color: #d6dadd;">
+			<p>Rüzgar Tutku Başbay, 2024</p>
+			<p>X-ray Güvenlik Kontrollerinde YOLOv5 ile Gerçek Zamanlı Nesne Tespiti</p>
+		</footer>
+		<script src=" https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+			integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous">
+			</script>
+	</body>
+
+</html>
