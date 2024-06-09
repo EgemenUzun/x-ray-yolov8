@@ -8,7 +8,7 @@ import numpy as np
 app = Flask(__name__)
 camera = cv2.VideoCapture(0)
 
-model = YOLO("./best.pt")
+model = YOLO("./best.pt", verbose=False)
 
 model.conf = 0.35
 model.iou = 0.45
@@ -25,16 +25,14 @@ contrast = 1.0
 filters_list = []
 
 def set_filter_status(filters_list):
-    global greyscale, edge, sharpening, bilateral, negative
-
-    edge = "edge" in filters_list
+    global greyscale, sharpening, bilateral, negative
     greyscale = "greyscale" in filters_list
     sharpening = "super" in filters_list
     bilateral = "bilateral" in filters_list
     negative = "negative" in filters_list
 
 def generate_frames():
-    global greyscale, edge, sharpening, bilateral, negative, brightness, contrast
+    global greyscale, sharpening, bilateral, negative, brightness, contrast
 
     while camera.isOpened():
         # read the camera frame
@@ -46,35 +44,34 @@ def generate_frames():
             result = frame.copy()
 
             if greyscale:
-                result = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                result = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
             else:
-                if edge:
-                    result = cv2.Canny(frame, 100, 50)
-
                 if bilateral:
-                    result = cv2.bilateralFilter(frame, 9, 75, 75)
-
+                    result = cv2.bilateralFilter(result, 9, 75, 75)
                 if negative:
-                    result = cv2.bitwise_not(frame)
-
+                    result = cv2.bitwise_not(result)
                 if sharpening:
                     result = cv2.filter2D(
                         result, -1, np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]]))
 
-            result = cv2.convertScaleAbs(
-                result, alpha=contrast, beta=brightness)
+            # Apply brightness and contrast adjustments
+            result = cv2.convertScaleAbs(result, alpha=contrast, beta=brightness)
 
-            # YOLOv8 modelini kullanarak tespit yap
-            results = model(result)
+            # Convert result to 3-channel BGR if greyscale is active (required for YOLO)
+            if greyscale:
+                result = cv2.cvtColor(result, cv2.COLOR_GRAY2BGR)
 
-            boxes = results[0].boxes
-            names = results[0].names
+            # Detect using the YOLOv8 model
+            yolo_result = model(result)
+
+            boxes = yolo_result[0].boxes
+            names = yolo_result[0].names
             for box in boxes:
-                x1, y1, x2, y2 = map(int, box.xyxy[0])  # Koordinatları al
-                label = names[int(box.cls)]  # Sınıf adını al
-                score = box.conf[0]  # Güven skorunu al
+                x1, y1, x2, y2 = map(int, box.xyxy[0])  # get Coordinates 
+                label = names[int(box.cls)]  # get class name
+                score = box.conf[0]  # get score
 
-                # Dikdörtgen çiz
+                # draw rectangle and label text
                 cv2.rectangle(result, (x1, y1), (x2, y2), (255, 0, 0), 2)
                 cv2.putText(result, f'{label} {score:.2f}', (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
 
